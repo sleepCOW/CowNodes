@@ -6,9 +6,7 @@
 #include "Editor/UMGEditor/Private/Nodes/K2Node_CreateWidget.h"
 #include "K2Node_CowCreateWidgetAsync.generated.h"
 
-/**
- * Add copyright notice
- * 
+/** 
  * Improved version of Epic's CreateWidget and CreateWidgetAsync
  * 
  * Combining best of both words with an attempt for general QoL improvements:
