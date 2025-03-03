@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Cow Nodes",
+	"Description": "A collection of nodes by Oleksandr \"sleepCOW\" Ozerov that will hopefully make your life a little bit easier",
+	"Category": "Other",
+	"CreatedBy": "sleepCOW",
+	"CreatedByURL": "olexthelake@gmail.com",
+	"DocsURL": "https://github.com/sleepCOW/CowNodes",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "CowNodes",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default"
+		}
+	]
+}
