@@ -62,7 +62,6 @@ public:
 	// COMPILATION BEGIN
 	
 	virtual void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
-	UEdGraphPin* GenerateAssignments(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph, class UK2Node_CallFunction* CallBeginSpawnNode, UEdGraphNode* SpawnNode, UEdGraphPin* CallBeginResult, const UEdGraphPin* CallBeginClassInput) const;
 	
 	// If we happen to connect SoftWidgetClass via Link to another pin (meaning at runtime the class may be different)
 	// Give a note for any default values that aren't changed from the base class
