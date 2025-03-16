@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CowNodes : ModuleRules
+public class CowNodesRuntime : ModuleRules
 {
-	public CowNodes(ReadOnlyTargetRules Target) : base(Target)
+	public CowNodesRuntime(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -42,8 +42,7 @@ public class CowNodes : ModuleRules
 				"Engine",
 				"BlueprintGraph",
 				"Kismet",
-				"KismetCompiler",
-				"CowNodesRuntime"
+				"KismetCompiler"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
