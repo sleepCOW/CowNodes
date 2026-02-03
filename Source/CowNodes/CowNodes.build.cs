@@ -42,7 +42,9 @@ public class CowNodes : ModuleRules
 				"Engine",
 				"BlueprintGraph",
 				"Kismet",
-				"KismetCompiler"
+				"KismetCompiler",
+				"AssetRegistry",
+				"CowRuntime"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

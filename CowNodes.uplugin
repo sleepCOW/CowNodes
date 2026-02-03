@@ -15,9 +15,14 @@
 	"Installed": false,
 	"Modules": [
 		{
+			"Name": "CowRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "CowNodes",
 			"Type": "UncookedOnly",
 			"LoadingPhase": "Default"
-		}
+		}	
 	]
 }
