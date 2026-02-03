@@ -3,7 +3,7 @@
 #include "CowFunctionLibrary.h"
 #include "EngineUtils.h"
 
-void UCowFunctionLibrary::CowGetAllActorsOfClass(const UObject* WorldContextObject, const TSoftClassPtr<AActor>& ActorClass, TArray<AActor*>& OutActors)
+void UCowFunctionLibrary::CowGetAllActorsOfClass(const UObject* WorldContextObject, TSoftClassPtr<AActor> ActorClass, TArray<AActor*>& OutActors)
 {
 	OutActors.Reset();
 
@@ -21,9 +21,4 @@ void UCowFunctionLibrary::CowGetAllActorsOfClass(const UObject* WorldContextObje
 			}
 		}
 	}
-}
-
-void UCowFunctionLibrary::TestGetAll(const UObject* WorldContextObject, TSoftClassPtr<AActor> ActorClass, TArray<AActor*>& OutActors)
-{
-
 }

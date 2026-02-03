@@ -1,6 +1,5 @@
 // Copyright (c) 2025 Oleksandr "sleepCOW" Ozerov. All rights reserved.
 
-
 #include "K2Node_CowGetAllActorsOfClass.h"
 
 // Engine
@@ -19,30 +18,18 @@
 
 #define LOCTEXT_NAMESPACE "Cow"
 
+void UK2Node_CowGetAllActorsOfClass::PostLoad()
+{
+	Super::PostLoad();
+
+	OnActorClassChanged();
+}
+
 void UK2Node_CowGetAllActorsOfClass::PostReconstructNode()
 {
 	Super::PostReconstructNode();
-}
 
-void UK2Node_CowGetAllActorsOfClass::PostLoad()
-{
-	UE_LOG(LogTemp, Log, TEXT("PostLoad"));
-	
-	Super::PostLoad();
-}
-
-void UK2Node_CowGetAllActorsOfClass::BeginDestroy()
-{
-	UE_LOG(LogTemp, Log, TEXT("BeginDestroy"));
-	
-	Super::BeginDestroy();
-}
-
-void UK2Node_CowGetAllActorsOfClass::ReconstructNode()
-{
-	Super::ReconstructNode();
-
-	UE_LOG(LogTemp, Log, TEXT("ReconstructNode"));
+	OnActorClassChanged();
 }
 
 void UK2Node_CowGetAllActorsOfClass::AllocateDefaultPins()
@@ -55,7 +42,8 @@ void UK2Node_CowGetAllActorsOfClass::AllocateDefaultPins()
 	FEdGraphPinType WorldContextPinType;
 	WorldContextPinType.PinCategory = UEdGraphSchema_K2::PC_Object;
 	WorldContextPinType.PinSubCategory = UEdGraphSchema_K2::PSC_Self;
-	CreatePin(EGPD_Input, WorldContextPinType, WorldContextObjectName);
+	UEdGraphPin* WorldContextPin = CreatePin(EGPD_Input, WorldContextPinType, WorldContextObjectName);
+	WorldContextPin->bHidden = true;
 
 	FEdGraphPinType ActorClassPinType;
 	ActorClassPinType.PinCategory = UEdGraphSchema_K2::PC_SoftClass;
@@ -67,7 +55,23 @@ void UK2Node_CowGetAllActorsOfClass::AllocateDefaultPins()
 	OutActorsPinType.PinCategory = UEdGraphSchema_K2::PC_Object;
 	OutActorsPinType.ContainerType = EPinContainerType::Array;
 	OutActorsPinType.PinSubCategoryObject = AActor::StaticClass();
-	CreatePin(EGPD_Input, OutActorsPinType, OutActorsName);
+	CreatePin(EGPD_Output, OutActorsPinType, OutActorsName);
+}
+
+void UK2Node_CowGetAllActorsOfClass::PinDefaultValueChanged(UEdGraphPin* ChangedPin)
+{
+	if (ChangedPin == FindPinChecked(ActorClassName, EGPD_Input))
+	{
+		OnActorClassChanged();
+	}
+}
+
+void UK2Node_CowGetAllActorsOfClass::PinConnectionListChanged(UEdGraphPin* ChangedPin)
+{
+	if (ChangedPin == FindPinChecked(ActorClassName, EGPD_Input))
+	{
+		OnActorClassChanged();
+	}
 }
 
 void UK2Node_CowGetAllActorsOfClass::ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
@@ -77,7 +81,6 @@ void UK2Node_CowGetAllActorsOfClass::ExpandNode(FKismetCompilerContext& Compiler
 	if (GetNativeClassFromInput() == nullptr)
 	{
 		CompilerContext.MessageLog.Error(*LOCTEXT("CowGetAllActorsOfClass_Error", "Cow Get All Actors Of Class node @@ must have a class specified!").ToString(), this);
-		// we break exec links so this is the only error we get, don't want the CreateWidget node being considered and giving 'unexpected node' type warnings
 		BreakAllNodeLinks();
 		return;
 	}
@@ -87,7 +90,22 @@ void UK2Node_CowGetAllActorsOfClass::ExpandNode(FKismetCompilerContext& Compiler
 	Call_GetAllActorsOfClass->FunctionReference.SetExternalMember(GET_FUNCTION_NAME_CHECKED(UCowFunctionLibrary, CowGetAllActorsOfClass), UCowFunctionLibrary::StaticClass());
 	Call_GetAllActorsOfClass->AllocateDefaultPins();
 
-	//UEdGraphPin* Call_GetAllActorsOfClass->FindPinChecked(Input_WorldContextObjectName
+	CompilerContext.MovePinLinksToIntermediate(*GetExecPin(), 
+											   *Call_GetAllActorsOfClass->GetExecPin());
+	CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), 
+											   *Call_GetAllActorsOfClass->GetThenPin());
+	CompilerContext.MovePinLinksToIntermediate(*FindPinChecked(WorldContextObjectName, EGPD_Input),
+											   *Call_GetAllActorsOfClass->FindPinChecked(WorldContextObjectName, EGPD_Input));
+	CompilerContext.MovePinLinksToIntermediate(*FindPinChecked(ActorClassName, EGPD_Input), 
+											   *Call_GetAllActorsOfClass->FindPinChecked(ActorClassName, EGPD_Input));
+
+	UEdGraphPin* This_OutActorsPin = FindPinChecked(OutActorsName, EGPD_Output);
+	UEdGraphPin* Output_OutActorsPin = Call_GetAllActorsOfClass->FindPinChecked(OutActorsName, EGPD_Output);
+	Output_OutActorsPin->PinType = This_OutActorsPin->PinType; // (Type match required to connect pins)
+	CompilerContext.MovePinLinksToIntermediate(*This_OutActorsPin, 
+											   *Output_OutActorsPin);
+
+	BreakAllNodeLinks();
 }
 
 FText UK2Node_CowGetAllActorsOfClass::GetMenuCategory() const
@@ -124,40 +142,56 @@ UClass* UK2Node_CowGetAllActorsOfClass::GetNativeClassFromInput() const
 {
     UEdGraphPin* ActorClassPin = FindPinChecked(ActorClassName, EGPD_Input);
 
-    // If SoftWidgetClassPin isn't connected to anything and not empty we should use Path written in DefaultValue
+    // If ActorClassPin isn't connected to anything and not empty we should use Path written in DefaultValue
 	if (!ActorClassPin->DefaultValue.IsEmpty() && ActorClassPin->LinkedTo.Num() == 0)
 	{
-        FSoftObjectPath SoftWidget = ActorClassPin->DefaultValue;
+        FSoftObjectPath SoftActorClass = ActorClassPin->DefaultValue;
 
-		// Looks like shit
+		// If class is blueprint try to get native parent from metadata to avoid loading class here
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 		FAssetData AssetData;
-		if (AssetRegistryModule.Get().TryGetAssetByObjectPath(SoftWidget, AssetData) != UE::AssetRegistry::EExists::Exists)
+		if (AssetRegistryModule.Get().TryGetAssetByObjectPath(SoftActorClass, AssetData) == UE::AssetRegistry::EExists::Exists)
 		{
-			return nullptr;
+			UClass* NativeParentClass = nullptr;
+			FString ParentClassName;
+			if(!AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, ParentClassName))
+			{
+				// By the looks of it we shouldn't rely on it but all places that use NativeParentClassPath do, so let's be safe
+				AssetData.GetTagValue(FBlueprintTags::ParentClassPath, ParentClassName);
+			}
+			if(!ParentClassName.IsEmpty())
+			{
+				UObject* Outer = nullptr;
+				ResolveName(Outer, ParentClassName, false, false);
+				NativeParentClass = FindObject<UClass>(Outer, *ParentClassName);
+			}
+			return NativeParentClass;
 		}
-
-		UClass* NativeParentClass = nullptr;
-		FString ParentClassName;
-		if(!AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, ParentClassName))
+		else
 		{
-			AssetData.GetTagValue(FBlueprintTags::ParentClassPath, ParentClassName);
+			UClass* NativeClass = FindObject<UClass>(SoftActorClass.GetAssetPath(), true);
+			return NativeClass;
 		}
-		if(!ParentClassName.IsEmpty())
-		{
-			UObject* Outer = nullptr;
-			ResolveName(Outer, ParentClassName, false, false);
-			NativeParentClass = FindObject<UClass>(Outer, *ParentClassName);
-		}
-		return NativeParentClass;
 	}
 	else if (ActorClassPin->LinkedTo.Num())
 	{
+		// If class pin connected to anything that means that our type is propagated
+		// And it's safe to use it (because hard-ref to the type is already created by the connection)
+		// We're not the one to blame in such a situation :)
 		UEdGraphPin* ClassSource = ActorClassPin->LinkedTo[0];
 		return Cast<UClass>(ClassSource->PinType.PinSubCategoryObject.Get());
 	}
     
     return nullptr;
+}
+
+void UK2Node_CowGetAllActorsOfClass::OnActorClassChanged()
+{
+	UEdGraphPin* ActorClassPin = FindPinChecked(ActorClassName, EGPD_Input);
+
+    // Fix our return type
+    UEdGraphPin* OutActorsPin = FindPinChecked(OutActorsName, EGPD_Output);
+	OutActorsPin->PinType.PinSubCategoryObject = GetNativeClassFromInput();
 }
 
 #undef LOCTEXT_NAMESPACE
