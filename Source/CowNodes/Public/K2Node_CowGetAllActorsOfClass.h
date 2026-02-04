@@ -9,7 +9,7 @@
 #include "K2Node_CowGetAllActorsOfClass.generated.h"
 
 /** 
- * #TODO: Add comment
+ * GetAllActors of class with no hard-ref and return array type promotion to the native class
  */
 UCLASS()
 class COWNODES_API UK2Node_CowGetAllActorsOfClass : public UK2Node

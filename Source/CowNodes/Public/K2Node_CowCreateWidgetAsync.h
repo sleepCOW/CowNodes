@@ -49,7 +49,6 @@ public:
 	// Life cycle BEGIN
 	virtual void PostLoad() override;
 	virtual void BeginDestroy() override;
-	virtual void ReconstructNode() override;
 	virtual void PostReconstructNode() override;
 	// Life cycle END
 

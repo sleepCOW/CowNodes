@@ -173,13 +173,6 @@ void UK2Node_CowCreateWidgetAsync::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-void UK2Node_CowCreateWidgetAsync::ReconstructNode()
-{
-	Super::ReconstructNode();
-
-	UE_LOG(LogTemp, Log, TEXT("ReconstructNode"));
-}
-
 void UK2Node_CowCreateWidgetAsync::AllocateDefaultPins()
 {
 	Super::AllocateDefaultPins();
