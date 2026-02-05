@@ -13,4 +13,7 @@ class COWRUNTIME_API UCowFunctionLibrary : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintCallable, Category = "Cow|Utilities", meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"))
 	static void CowGetAllActorsOfClass(const UObject* WorldContextObject, TSoftClassPtr<AActor> ActorClass, TArray<AActor*>& OutActors);
+
+	UFUNCTION(BlueprintCallable, Category = "Cow|Utilities", meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"))
+	static void CowGetActorOfClass(const UObject* WorldContextObject, TSoftClassPtr<AActor> ActorClass, AActor*& OutActor);
 };

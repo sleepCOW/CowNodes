@@ -22,3 +22,22 @@ void UCowFunctionLibrary::CowGetAllActorsOfClass(const UObject* WorldContextObje
 		}
 	}
 }
+
+void UCowFunctionLibrary::CowGetActorOfClass(const UObject* WorldContextObject, TSoftClassPtr<AActor> ActorClass, AActor*& OutActor)
+{
+	// By doing hard mental exercise we were able to deduce that if soft ptr isn't loaded no actors present in world :Einstein:
+	if (UClass* LoadedClass = ActorClass.Get())
+	{
+		if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+		{
+			for (TActorIterator<AActor> It{World, LoadedClass}; It; ++It)
+			{
+				if (AActor* Actor = *It; Actor)
+				{
+					OutActor = Actor;
+					return;
+				}
+			}
+		}
+	}
+}

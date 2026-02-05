@@ -10,14 +10,12 @@ public class CowNodes : ModuleRules
 
 		PublicIncludePaths.AddRange(
 			new string[] {
-				// ... add public include paths required here ...
 			}
 			);
 				
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				// ... add other private include paths required here ...
 			}
 			);
 			
@@ -26,7 +24,6 @@ public class CowNodes : ModuleRules
 			new string[]
 			{
 				"Core",
-				// ... add other public dependencies that you statically link with here ...
 			}
 			);
 			
@@ -37,7 +34,10 @@ public class CowNodes : ModuleRules
 				"Projects",
 				"UnrealEd",
 				"UMG",
+				"Slate",
+				"SlateCore",
 				"UMGEditor",
+				"ToolMenus",
 				"CoreUObject",
 				"Engine",
 				"BlueprintGraph",
@@ -45,7 +45,6 @@ public class CowNodes : ModuleRules
 				"KismetCompiler",
 				"AssetRegistry",
 				"CowRuntime"
-				// ... add private dependencies that you statically link with here ...	
 			}
 			);
 		
@@ -53,7 +52,6 @@ public class CowNodes : ModuleRules
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
-				// ... add any modules that your module loads dynamically here ...
 			}
 			);
 	}

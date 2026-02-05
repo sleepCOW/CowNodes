@@ -50,12 +50,15 @@ void UK2Node_CowGetAllActorsOfClass::AllocateDefaultPins()
 	ActorClassPinType.PinSubCategoryObject = AActor::StaticClass();
 	CreatePin(EGPD_Input, ActorClassPinType, ActorClassName);
 
-	// #TODO: Type should be related to input
 	FEdGraphPinType OutActorsPinType;
 	OutActorsPinType.PinCategory = UEdGraphSchema_K2::PC_Object;
-	OutActorsPinType.ContainerType = EPinContainerType::Array;
+	if (bOutputAsArray)
+	{
+		OutActorsPinType.ContainerType = EPinContainerType::Array;
+	}
 	OutActorsPinType.PinSubCategoryObject = AActor::StaticClass();
-	CreatePin(EGPD_Output, OutActorsPinType, OutActorsName);
+	const FName OutActorPinName = bOutputAsArray ? OutActorsName : OutActorName;
+	CreatePin(EGPD_Output, OutActorsPinType, OutActorPinName);
 }
 
 void UK2Node_CowGetAllActorsOfClass::PinDefaultValueChanged(UEdGraphPin* ChangedPin)
@@ -87,7 +90,9 @@ void UK2Node_CowGetAllActorsOfClass::ExpandNode(FKismetCompilerContext& Compiler
 
 	const UEdGraphSchema_K2* Schema = CompilerContext.GetSchema();
 	UK2Node_CallFunction* Call_GetAllActorsOfClass = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
-	Call_GetAllActorsOfClass->FunctionReference.SetExternalMember(GET_FUNCTION_NAME_CHECKED(UCowFunctionLibrary, CowGetAllActorsOfClass), UCowFunctionLibrary::StaticClass());
+	const FName GetFunctionName = bOutputAsArray ? GET_FUNCTION_NAME_CHECKED(UCowFunctionLibrary, CowGetAllActorsOfClass) 
+												 : GET_FUNCTION_NAME_CHECKED(UCowFunctionLibrary, CowGetActorOfClass);
+	Call_GetAllActorsOfClass->FunctionReference.SetExternalMember(GetFunctionName, UCowFunctionLibrary::StaticClass());
 	Call_GetAllActorsOfClass->AllocateDefaultPins();
 
 	CompilerContext.MovePinLinksToIntermediate(*GetExecPin(), 
@@ -99,8 +104,8 @@ void UK2Node_CowGetAllActorsOfClass::ExpandNode(FKismetCompilerContext& Compiler
 	CompilerContext.MovePinLinksToIntermediate(*FindPinChecked(ActorClassName, EGPD_Input), 
 											   *Call_GetAllActorsOfClass->FindPinChecked(ActorClassName, EGPD_Input));
 
-	UEdGraphPin* This_OutActorsPin = FindPinChecked(OutActorsName, EGPD_Output);
-	UEdGraphPin* Output_OutActorsPin = Call_GetAllActorsOfClass->FindPinChecked(OutActorsName, EGPD_Output);
+	UEdGraphPin* This_OutActorsPin = FindPinChecked(GetOutPinName(), EGPD_Output);
+	UEdGraphPin* Output_OutActorsPin = Call_GetAllActorsOfClass->FindPinChecked(GetOutPinName(), EGPD_Output);
 	Output_OutActorsPin->PinType = This_OutActorsPin->PinType; // (Type match required to connect pins)
 	CompilerContext.MovePinLinksToIntermediate(*This_OutActorsPin, 
 											   *Output_OutActorsPin);
@@ -115,7 +120,8 @@ FText UK2Node_CowGetAllActorsOfClass::GetMenuCategory() const
 
 FText UK2Node_CowGetAllActorsOfClass::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return FText(LOCTEXT("CowGetAllActorsOfClassNodeTitle", "Cow Get All Actors Of Class"));
+	return bOutputAsArray ? FText(LOCTEXT("CowGetAllActorsOfClassNodeTitle", "Cow Get All Actors Of Class")) :
+							FText(LOCTEXT("CowGetActorOfClassNodeTitle", "Cow Get Actor Of Class"));
 }
 
 void UK2Node_CowGetAllActorsOfClass::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
@@ -136,6 +142,25 @@ void UK2Node_CowGetAllActorsOfClass::GetMenuActions(FBlueprintActionDatabaseRegi
 
 		ActionRegistrar.AddBlueprintAction(ActionKey, NodeSpawner);
 	}
+}
+
+void UK2Node_CowGetAllActorsOfClass::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+	Super::GetNodeContextMenuActions(Menu, Context);
+
+	FToolMenuSection& Section = Menu->AddSection("K2Node_CowGetAllActorsOfClass", LOCTEXT("FunctionHeader", "Function"));
+
+	Section.AddMenuEntry(
+		TEXT("ToggleNodeOutput"),
+		GetConvertContextActionName(bOutputAsArray),
+		GetConvertContextActionName(bOutputAsArray),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateUObject(const_cast<UK2Node_CowGetAllActorsOfClass*>(this), &UK2Node_CowGetAllActorsOfClass::ToggleNodeOutput),
+			FCanExecuteAction(),
+			FIsActionChecked()
+		)
+	);
 }
 
 UClass* UK2Node_CowGetAllActorsOfClass::GetNativeClassFromInput() const
@@ -190,8 +215,29 @@ void UK2Node_CowGetAllActorsOfClass::OnActorClassChanged()
 	UEdGraphPin* ActorClassPin = FindPinChecked(ActorClassName, EGPD_Input);
 
     // Fix our return type
-    UEdGraphPin* OutActorsPin = FindPinChecked(OutActorsName, EGPD_Output);
+    UEdGraphPin* OutActorsPin = FindPinChecked(GetOutPinName(), EGPD_Output);
 	OutActorsPin->PinType.PinSubCategoryObject = GetNativeClassFromInput();
+}
+
+void UK2Node_CowGetAllActorsOfClass::ToggleNodeOutput()
+{
+	const FText TransactionTitle = GetConvertContextActionName(bOutputAsArray);
+
+	bOutputAsArray = !bOutputAsArray;
+	
+	FScopedTransaction Transaction(TransactionTitle);
+	Modify();
+	ReconstructNode();
+}
+
+const FText UK2Node_CowGetAllActorsOfClass::GetConvertContextActionName(const bool InOutputAsArray)
+{
+	return InOutputAsArray ? LOCTEXT("ConvertNodeToSingle", "Convert To Single Actor") : LOCTEXT("ConvertNodeToMulti", "Convert Get To All Actors");
+}
+
+const FName UK2Node_CowGetAllActorsOfClass::GetOutPinName() const
+{
+	return bOutputAsArray ? OutActorsName : OutActorName;
 }
 
 #undef LOCTEXT_NAMESPACE
