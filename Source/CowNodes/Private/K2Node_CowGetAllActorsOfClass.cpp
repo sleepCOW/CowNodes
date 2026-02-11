@@ -137,10 +137,21 @@ void UK2Node_CowGetAllActorsOfClass::GetMenuActions(FBlueprintActionDatabaseRegi
 	// registrar would only accept actions corresponding to that asset)
 	if (ActionRegistrar.IsOpenForRegistration(ActionKey))
 	{
-		UBlueprintNodeSpawner* NodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
-		check(NodeSpawner != nullptr);
+		UBlueprintNodeSpawner* DefaultNodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
+		check(DefaultNodeSpawner != nullptr);
 
-		ActionRegistrar.AddBlueprintAction(ActionKey, NodeSpawner);
+		ActionRegistrar.AddBlueprintAction(ActionKey, DefaultNodeSpawner);
+
+		auto PostSpawnSetupLambda = [](UEdGraphNode* InNewNode, bool bIsTemplateNode)
+		{
+			UK2Node_CowGetAllActorsOfClass* CowGetActorOfClass = CastChecked<UK2Node_CowGetAllActorsOfClass>(InNewNode);
+			CowGetActorOfClass->bOutputAsArray = false;
+		};
+		UBlueprintNodeSpawner::FCustomizeNodeDelegate PostSpawnDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateLambda(PostSpawnSetupLambda);
+		UBlueprintNodeSpawner* SingleVersionNode = UBlueprintNodeSpawner::Create(GetClass(), nullptr, PostSpawnDelegate);
+		check(SingleVersionNode != nullptr);
+
+		ActionRegistrar.AddBlueprintAction(ActionKey, SingleVersionNode);
 	}
 }
 
@@ -223,6 +234,8 @@ void UK2Node_CowGetAllActorsOfClass::ToggleNodeOutput()
 {
 	const FText TransactionTitle = GetConvertContextActionName(bOutputAsArray);
 
+	// Remove previous version output pin
+	RemovePin(FindPinChecked(GetOutPinName(), EGPD_Output));
 	bOutputAsArray = !bOutputAsArray;
 	
 	FScopedTransaction Transaction(TransactionTitle);
