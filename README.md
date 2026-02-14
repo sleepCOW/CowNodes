@@ -9,7 +9,7 @@ Hopefully the name `Cow Nodes` will become true someday and there will be more p
 # List of nodes:
 
 - [`CowCreateWidgetAsync` - Ultimate Create Widget Async](#CowCreateWidgetAsync)
-- [`CowGetAllActorsOfClass/CowGetActorOfClass` - Get Actors without hard-refs](#CowGetAllActorsOfClass)
+- [`CowGetAllActorsOfClass/CowGetActorOfClass` - Get Actors without hard-refs](#CowGetAllActorsOfClass--CowGetActorOfClass)
 
 # CowCreateWidgetAsync
 Improved Version of Epic's `CreateWidget` and `CreateWidgetAsync` (from `CommonGame`)
@@ -55,7 +55,7 @@ It will be either the first native class or the widget class if linked to a pin 
 4. **Editor Limitation**: In the editor, the node holds a **hard reference** to the `WidgetClass`.
 This is required for pin generation and proper reloading when `WidgetClass` changes.
 
-# CowGetAllActorsOfClass / CowGetActorOfClass {#CowGetAllActorsOfClass}
+# CowGetAllActorsOfClass / CowGetActorOfClass
 Improved Version of Engine's `GetAllActorsOfClass` and `GetActorOfClass` (from `UGameplayStatics`)
 
 This version does everything original `GetAllActorsOfClass` do but without introducing hard-ref
