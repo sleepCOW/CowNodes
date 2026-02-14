@@ -137,11 +137,13 @@ void UK2Node_CowGetAllActorsOfClass::GetMenuActions(FBlueprintActionDatabaseRegi
 	// registrar would only accept actions corresponding to that asset)
 	if (ActionRegistrar.IsOpenForRegistration(ActionKey))
 	{
+		// CowGetAllActorsOfClass
 		UBlueprintNodeSpawner* DefaultNodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 		check(DefaultNodeSpawner != nullptr);
 
 		ActionRegistrar.AddBlueprintAction(ActionKey, DefaultNodeSpawner);
 
+		// Separate registration for CowGetActorOfClass version
 		auto PostSpawnSetupLambda = [](UEdGraphNode* InNewNode, bool bIsTemplateNode)
 		{
 			UK2Node_CowGetAllActorsOfClass* CowGetActorOfClass = CastChecked<UK2Node_CowGetAllActorsOfClass>(InNewNode);

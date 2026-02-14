@@ -44,7 +44,8 @@ public class CowNodes : ModuleRules
 				"Kismet",
 				"KismetCompiler",
 				"AssetRegistry",
-				"CowRuntime"
+				"CowRuntime",
+				"ToolMenus"
 			}
 			);
 		
